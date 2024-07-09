@@ -89,3 +89,29 @@ def test_movie_details_endpoint(client, monkeypatch):
     assert b'Keanu Reeves' in response.data
     assert b'Neo' in response.data
     assert b'/path/to/backdrop.jpg' in response.data
+
+@pytest.mark.parametrize("list_type", ["popular", "top_rated", "now_playing", "upcoming"])
+def test_homepage(client, monkeypatch, list_type):
+    mock_movies = []
+
+    def mock_get_movies(list_name):
+        return mock_movies
+
+    monkeypatch.setattr("tmdb_client.get_movies", mock_get_movies)
+
+    response = client.get(f'/?list_type={list_type}')
+    assert response.status_code == 200
+    tmdb_client.get_movies.assert_called_once_with(list_name=list_type)
+
+@pytest.mark.parametrize("list_type", ["invalid_list"])
+def test_homepage_with_invalid_list_type(client, monkeypatch, list_type):
+    mock_movies = []
+
+    def mock_get_movies(list_name):
+        return mock_movies
+
+    monkeypatch.setattr("tmdb_client.get_movies", mock_get_movies)
+
+    response = client.get(f'/?list_type={list_type}')
+    assert response.status_code == 200  
+    tmdb_client.get_movies.assert_called_once_with(list_name='popular')  
